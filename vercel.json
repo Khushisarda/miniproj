@@ -3,17 +3,25 @@
     {
       "src": "api/index.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "web/index.html",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
       "dest": "api/index.py"
+    },
+    {
+      "src": "/",
+      "dest": "web/index.html"
     }
   ],
   "crons": [
     {
-      "path": "/api/index?source=cron",
+      "path": "/api/index.py?source=cron",
       "schedule": "0 18 * * *"
     }
   ]

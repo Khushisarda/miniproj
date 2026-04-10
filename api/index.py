@@ -8,6 +8,9 @@ import os
 import base64
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # --- Firebase Initialization ---
 # This section securely initializes Firebase using an environment variable.
@@ -114,17 +117,31 @@ def get_leetcode_summary(username):
         "last_submission": last_submission
     }
 
+# --- CORS Helper ---
+def add_cors_headers(self):
+    """Add CORS headers for cross-origin requests."""
+    self.send_header('Access-Control-Allow-Origin', '*')
+    self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+
 # --- Vercel Serverless Handler ---
 class handler(BaseHTTPRequestHandler):
+    def do_OPTIONS(self):
+        """Handle CORS preflight requests."""
+        self.send_response(200)
+        add_cors_headers(self)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+
     def do_GET(self):
-        """Handles GET requests for single users or scheduled cron jobs."""
+        """Handles GET requests for single users, list users, or scheduled cron jobs."""
         query_components = parse_qs(urlparse(self.path).query)
         username = query_components.get('username', [None])[0]
-        # Check for a specific query parameter to identify the cron job
         source = query_components.get('source', [None])[0]
 
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
+        add_cors_headers(self)
         self.end_headers()
         
         response = {}
@@ -135,13 +152,50 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(response, indent=2).encode('utf-8'))
             return
 
+        # --- List All Users Endpoint ---
+        if source == 'list':
+            try:
+                users_ref = db.collection("leetcodeUsers").stream()
+                users = []
+                for doc in users_ref:
+                    user_data = doc.to_dict()
+                    if "last_updated" in user_data:
+                        user_data["last_updated"] = user_data["last_updated"].isoformat() if hasattr(user_data["last_updated"], 'isoformat') else str(user_data["last_updated"])
+                    user_data["id"] = doc.id
+                    users.append(user_data)
+                response = {
+                    "status": "success",
+                    "total_users": len(users),
+                    "users": users
+                }
+            except Exception as e:
+                response = {"status": "error", "message": "Failed to fetch users.", "details": str(e)}
+
+        # --- Get Stored User Data Endpoint ---
+        elif source == 'get' and username:
+            try:
+                doc_ref = db.collection("leetcodeUsers").document(username)
+                doc = doc_ref.get()
+                if doc.exists:
+                    user_data = doc.to_dict()
+                    if "last_updated" in user_data:
+                        user_data["last_updated"] = user_data["last_updated"].isoformat() if hasattr(user_data["last_updated"], 'isoformat') else str(user_data["last_updated"])
+                    response = {
+                        "status": "success",
+                        "data": user_data
+                    }
+                else:
+                    response = {"status": "error", "message": f"User '{username}' not found in database."}
+            except Exception as e:
+                response = {"status": "error", "message": "Failed to fetch user data.", "details": str(e)}
+
         # --- Cron Job Logic ---
-        if source == 'cron':
+        elif source == 'cron':
             try:
                 # 1. Get all existing usernames from Firestore
                 users_ref = db.collection("leetcodeUsers").stream()
                 usernames = [doc.id for doc in users_ref]
-                
+
                 updated_count = 0
                 failed_users = []
 
@@ -159,7 +213,7 @@ class handler(BaseHTTPRequestHandler):
                     except Exception as e:
                         print(f"CRON: Failed to update {uname}: {e}")
                         failed_users.append(uname)
-                
+
                 response = {
                     "status": "success",
                     "job": "cron_update_all",
@@ -204,3 +258,9 @@ class handler(BaseHTTPRequestHandler):
 
         self.wfile.write(json.dumps(response, indent=2).encode('utf-8'))
         return
+    
+if __name__ == "__main__":
+    from http.server import HTTPServer
+    server = HTTPServer(('localhost', 8000), handler)
+    print("Server running on http://localhost:8000")
+    server.serve_forever()
