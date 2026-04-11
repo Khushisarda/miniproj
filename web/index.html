@@ -3,942 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LeetSeek - LeetCode Tracker</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-tertiary: #1a1a25;
-            --bg-card: #15151f;
-            --text-primary: #f0f0f5;
-            --text-secondary: #8a8a9a;
-            --text-muted: #5a5a6a;
-            --accent: #00d4aa;
-            --accent-hover: #00f5c4;
-            --accent-subtle: rgba(0, 212, 170, 0.1);
-            --easy: #4ade80;
-            --medium: #fbbf24;
-            --hard: #f87171;
-            --border: #2a2a35;
-            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
-
-        /* Background pattern */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background:
-                radial-gradient(ellipse at 20% 20%, rgba(0, 212, 170, 0.03) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, rgba(0, 212, 170, 0.02) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        /* Header */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 3rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--accent), #00a888);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.25rem;
-            color: var(--bg-primary);
-        }
-
-        .logo h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            letter-spacing: -0.5px;
-        }
-
-        .logo span {
-            color: var(--accent);
-        }
-
-        /* Button */
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 500;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: var(--bg-primary);
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-
-        .btn-ghost {
-            background: transparent;
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-        }
-
-        .btn-ghost:hover {
-            color: var(--text-primary);
-            border-color: var(--text-secondary);
-        }
-
-        /* Stats Overview */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            border-color: var(--accent);
-            box-shadow: 0 0 30px var(--accent-subtle);
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--accent);
-        }
-
-        /* User Grid */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-
-        .user-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1rem;
-        }
-
-        .user-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .user-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--accent), transparent);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .user-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-        }
-
-        .user-card:hover::before {
-            opacity: 1;
-        }
-
-        .user-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .user-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: var(--bg-tertiary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 1.25rem;
-            color: var(--accent);
-            border: 2px solid var(--border);
-        }
-
-        .user-info h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .user-info p {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .user-stats {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .problem-count {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        .problem-count .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .dot-easy { background: var(--easy); }
-        .dot-medium { background: var(--medium); }
-        .dot-hard { background: var(--hard); }
-
-        .total-solved {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .last-updated {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 2rem;
-            width: 90%;
-            max-width: 400px;
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-
-        .modal-overlay.active .modal {
-            transform: scale(1);
-        }
-
-        .modal h2 {
-            font-size: 1.25rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .modal p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .input-group {
-            margin-bottom: 1rem;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            transition: all 0.2s ease;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-subtle);
-        }
-
-        .input-group input::placeholder {
-            color: var(--text-muted);
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .modal-actions .btn {
-            flex: 1;
-            justify-content: center;
-        }
-
-        /* User Detail Modal */
-        .detail-modal .modal {
-            max-width: 500px;
-        }
-
-        .detail-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .detail-avatar {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: var(--bg-tertiary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.5rem;
-            color: var(--accent);
-            border: 2px solid var(--accent);
-        }
-
-        .detail-info h2 {
-            font-size: 1.5rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .detail-info p {
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--accent);
-            margin-bottom: 0;
-        }
-
-        .detail-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .detail-stat {
-            text-align: center;
-            padding: 1rem;
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-        }
-
-        .detail-stat .count {
-            font-size: 1.5rem;
-            font-weight: 700;
-            display: block;
-        }
-
-        .detail-stat .label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        .detail-stat.easy .count { color: var(--easy); }
-        .detail-stat.medium .count { color: var(--medium); }
-        .detail-stat.hard .count { color: var(--hard); }
-
-        .last-submission {
-            padding: 1rem;
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-        }
-
-        .last-submission h4 {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 0.5rem;
-        }
-
-        .last-submission a {
-            color: var(--accent);
-            text-decoration: none;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .last-submission a:hover {
-            text-decoration: underline;
-        }
-
-        /* Loading */
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 4rem;
-            color: var(--text-muted);
-        }
-
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 0.75rem;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--text-muted);
-        }
-
-        .empty-state svg {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        .empty-state h3 {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-        }
-
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            padding: 1rem 1.5rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 1001;
-        }
-
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        .toast.success {
-            border-color: var(--accent);
-        }
-
-        .toast.error {
-            border-color: var(--hard);
-        }
-
-        /* Responsive */
-        @media (max-width: 640px) {
-            .container {
-                padding: 1rem;
-            }
-
-            header {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-
-            .user-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .detail-stats {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <title>LeetSeek Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">
-                <div class="logo-icon">LS</div>
-                <h1>Leet<span>Seek</span></h1>
-            </div>
-            <button class="btn btn-primary" onclick="openAddModal()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+
+<div class="app">
+    <header>
+        <div class="logo">
+            <div class="logo-mark">LS</div>
+            <div class="logo-text">Leet<span>Seek</span></div>
+        </div>
+        <div class="header-right">
+            <button class="refresh-btn" id="refreshBtn" title="Refresh all">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+            </button>
+            <button class="add-btn" id="openModalBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
-                Add User
+                Add Friend
             </button>
-        </header>
+            <button class="add-btn logout-btn" id="logoutBtn">Logout</button>
+        </div>
+    </header>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total Users</div>
-                <div class="stat-value" id="totalUsers">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Problems Solved</div>
-                <div class="stat-value" id="totalSolved">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Easy</div>
-                <div class="stat-value" style="color: var(--easy)" id="totalEasy">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Medium</div>
-                <div class="stat-value" style="color: var(--medium)" id="totalMedium">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Hard</div>
-                <div class="stat-value" style="color: var(--hard)" id="totalHard">0</div>
-            </div>
+    <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="profile">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Profile
+        </button>
+        <button class="nav-tab" data-tab="friends">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            Friends
+        </button>
+        <button class="nav-tab" data-tab="friends-lb">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            Friends Rank
+        </button>
+        <button class="nav-tab" data-tab="global-lb">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            Global Rank
+        </button>
+    </nav>
+
+    <div class="content">
+        <div class="tab-panel active" id="tab-profile">
+            <div id="profileContent"></div>
         </div>
 
-        <div class="section-header">
-            <h2 class="section-title">All Users</h2>
-        </div>
-
-        <div class="user-grid" id="userGrid">
-            <div class="loading">
-                <div class="spinner"></div>
-                Loading users...
-            </div>
-        </div>
-    </div>
-
-    <!-- Add User Modal -->
-    <div class="modal-overlay" id="addModal">
-        <div class="modal">
-            <h2>Add LeetCode User</h2>
-            <p>Enter a LeetCode username to track</p>
-            <div class="input-group">
-                <label for="usernameInput">Username</label>
-                <input type="text" id="usernameInput" placeholder="e.g. neetcode" autocomplete="off">
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="addUser()">Add User</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- User Detail Modal -->
-    <div class="modal-overlay detail-modal" id="detailModal">
-        <div class="modal">
-            <div class="detail-header">
-                <div class="detail-avatar" id="detailAvatar">N</div>
-                <div class="detail-info">
-                    <h2 id="detailName">Name</h2>
-                    <p id="detailUsername">@username</p>
+        <div class="tab-panel" id="tab-friends">
+            <div class="lb-header" style="margin-bottom:1.5rem">
+                <div>
+                    <div class="lb-title">Friends List</div>
+                    <div class="lb-subtitle">Your personal tracked network</div>
                 </div>
             </div>
-            <div class="detail-stats">
-                <div class="detail-stat easy">
-                    <span class="count" id="detailEasy">0</span>
-                    <span class="label">Easy</span>
-                </div>
-                <div class="detail-stat medium">
-                    <span class="count" id="detailMedium">0</span>
-                    <span class="label">Medium</span>
-                </div>
-                <div class="detail-stat hard">
-                    <span class="count" id="detailHard">0</span>
-                    <span class="label">Hard</span>
+            <div class="friends-grid" id="friendsGrid"></div>
+        </div>
+
+        <div class="tab-panel" id="tab-friends-lb">
+            <div class="lb-header">
+                <div>
+                    <div class="lb-title">Friends Leaderboard</div>
+                    <div class="lb-subtitle">You vs. Your Friends</div>
                 </div>
             </div>
-            <div class="last-submission" id="lastSubmissionSection">
-                <h4>Last Submission</h4>
-                <a href="#" target="_blank" id="detailLastProblem">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                        <polyline points="15 3 21 3 21 9"></polyline>
-                        <line x1="10" y1="14" x2="21" y2="3"></line>
-                    </svg>
-                    Problem Name
-                </a>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;" id="detailLastTime"></p>
+            <div class="podium" id="podium-friends"></div>
+            <div class="rank-list" id="rankList-friends"></div>
+        </div>
+
+        <div class="tab-panel" id="tab-global-lb">
+            <div class="lb-header">
+                <div>
+                    <div class="lb-title">Global Leaderboard</div>
+                    <div class="lb-subtitle">Everyone in the LeetSeek database</div>
+                </div>
             </div>
-            <div class="modal-actions">
-                <button class="btn btn-ghost" onclick="closeDetailModal()">Close</button>
-            </div>
+            <div class="podium" id="podium-global"></div>
+            <div class="rank-list" id="rankList-global"></div>
         </div>
     </div>
+</div>
 
-    <!-- Toast -->
-    <div class="toast" id="toast">
-        <span id="toastMessage">Message</span>
+<div class="overlay" id="modal">
+    <div class="modal">
+        <div class="modal-title">Add a Friend</div>
+        <div class="modal-sub">Enter their LeetCode username to track them.</div>
+        <div class="field">
+            <label>Username</label>
+            <input type="text" id="usernameInput" placeholder="e.g. neetcode" autocomplete="off">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" id="cancelBtn">Cancel</button>
+            <button class="btn-confirm" id="confirmBtn">Add Friend</button>
+        </div>
     </div>
+</div>
 
-    <script>
-        // API Configuration - Update this to your Vercel URL
-        const API_BASE = window.location.origin;
+<div class="toast" id="toast">
+    <span class="toast-dot"></span>
+    <span id="toastMsg"></span>
+</div>
 
-        let users = [];
-
-        // Fetch and render users
-        async function fetchUsers() {
-            const grid = document.getElementById('userGrid');
-
-            try {
-                const response = await fetch(`${API_BASE}?source=list`);
-                const data = await response.json();
-
-                if (data.status === 'error') {
-                    grid.innerHTML = `
-                        <div class="empty-state">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="8" x2="12" y2="12"></line>
-                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                            </svg>
-                            <h3>Unable to load users</h3>
-                            <p>${data.message}</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                users = data.users || [];
-                renderUsers();
-                updateStats();
-            } catch (error) {
-                grid.innerHTML = `
-                    <div class="empty-state">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                        <h3>Connection error</h3>
-                        <p>Make sure the API is running</p>
-                    </div>
-                `;
-            }
-        }
-
-        function renderUsers() {
-            const grid = document.getElementById('userGrid');
-
-            if (users.length === 0) {
-                grid.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1 / -1;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                        <h3>No users yet</h3>
-                        <p>Add your first LeetCode user to get started</p>
-                    </div>
-                `;
-                return;
-            }
-
-            grid.innerHTML = users.map(user => {
-                const solved = user.problems_solved || {};
-                const easy = solved.Easy || 0;
-                const medium = solved.Medium || 0;
-                const hard = solved.Hard || 0;
-                const total = easy + medium + hard;
-                const initial = (user.name || user.username || 'U')[0].toUpperCase();
-                const lastUpdated = user.last_updated ? formatDate(user.last_updated) : 'Never';
-
-                return `
-                    <div class="user-card" onclick="showUserDetail('${user.username}')">
-                        <div class="user-header">
-                            <div class="user-avatar">${initial}</div>
-                            <div class="user-info">
-                                <h3>${user.name || 'Unknown'}</h3>
-                                <p>@${user.username}</p>
-                            </div>
-                        </div>
-                        <div class="user-stats">
-                            <div class="problem-count">
-                                <span class="dot dot-easy"></span>
-                                ${easy}
-                            </div>
-                            <div class="problem-count">
-                                <span class="dot dot-medium"></span>
-                                ${medium}
-                            </div>
-                            <div class="problem-count">
-                                <span class="dot dot-hard"></span>
-                            </div>
-                            <span class="total-solved">${total} total</span>
-                        </div>
-                        <div class="last-updated">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
-                            Updated ${lastUpdated}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function updateStats() {
-            let totalEasy = 0, totalMedium = 0, totalHard = 0, totalSolved = 0;
-
-            users.forEach(user => {
-                const solved = user.problems_solved || {};
-                totalEasy += solved.Easy || 0;
-                totalMedium += solved.Medium || 0;
-                totalHard += solved.Hard || 0;
-                totalSolved += totalEasy + totalMedium + totalHard;
-            });
-
-            document.getElementById('totalUsers').textContent = users.length;
-            document.getElementById('totalSolved').textContent = totalSolved;
-            document.getElementById('totalEasy').textContent = totalEasy;
-            document.getElementById('totalMedium').textContent = totalMedium;
-            document.getElementById('totalHard').textContent = totalHard;
-        }
-
-        function formatDate(dateStr) {
-            const date = new Date(dateStr);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMs / 3600000);
-            const diffDays = Math.floor(diffMs / 86400000);
-
-            if (diffMins < 1) return 'Just now';
-            if (diffMins < 60) return `${diffMins}m ago`;
-            if (diffHours < 24) return `${diffHours}h ago`;
-            if (diffDays < 7) return `${diffDays}d ago`;
-            return date.toLocaleDateString();
-        }
-
-        // Modal functions
-        function openAddModal() {
-            document.getElementById('addModal').classList.add('active');
-            document.getElementById('usernameInput').focus();
-        }
-
-        function closeAddModal() {
-            document.getElementById('addModal').classList.remove('active');
-            document.getElementById('usernameInput').value = '';
-        }
-
-        async function addUser() {
-            const username = document.getElementById('usernameInput').value.trim();
-            if (!username) {
-                showToast('Please enter a username', 'error');
-                return;
-            }
-
-            const btn = document.querySelector('#addModal .btn-primary');
-            btn.disabled = true;
-            btn.innerHTML = '<div class="spinner" style="width: 16px; height: 16px; margin-right: 0;"></div> Adding...';
-
-            try {
-                const response = await fetch(`${API_BASE}?username=${encodeURIComponent(username)}`);
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    showToast(`Added user ${username} successfully!`, 'success');
-                    closeAddModal();
-                    fetchUsers();
-                } else {
-                    showToast(data.message || 'Failed to add user', 'error');
-                }
-            } catch (error) {
-                showToast('Connection error', 'error');
-            }
-
-            btn.disabled = false;
-            btn.innerHTML = 'Add User';
-        }
-
-        function showUserDetail(username) {
-            const user = users.find(u => u.username === username);
-            if (!user) return;
-
-            const solved = user.problems_solved || {};
-
-            document.getElementById('detailAvatar').textContent = (user.name || user.username || 'U')[0].toUpperCase();
-            document.getElementById('detailName').textContent = user.name || 'Unknown';
-            document.getElementById('detailUsername').textContent = '@' + user.username;
-            document.getElementById('detailEasy').textContent = solved.Easy || 0;
-            document.getElementById('detailMedium').textContent = solved.Medium || 0;
-            document.getElementById('detailHard').textContent = solved.Hard || 0;
-
-            if (user.last_submission) {
-                document.getElementById('lastSubmissionSection').style.display = 'block';
-                document.getElementById('detailLastProblem').textContent = user.last_submission.title;
-                document.getElementById('detailLastProblem').href = user.last_submission.url;
-                document.getElementById('detailLastTime').textContent =
-                    new Date(user.last_submission.timestamp).toLocaleString() + ' • ' + user.last_submission.lang;
-            } else {
-                document.getElementById('lastSubmissionSection').style.display = 'none';
-            }
-
-            document.getElementById('detailModal').classList.add('active');
-        }
-
-        function closeDetailModal() {
-            document.getElementById('detailModal').classList.remove('active');
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toastMessage');
-
-            toast.className = `toast ${type} show`;
-            toastMessage.textContent = message;
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-
-        // Event listeners
-        document.getElementById('usernameInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addUser();
-        });
-
-        document.getElementById('addModal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('addModal')) closeAddModal();
-        });
-
-        document.getElementById('detailModal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('detailModal')) closeDetailModal();
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeAddModal();
-                closeDetailModal();
-            }
-            if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') {
-                openAddModal();
-            }
-        });
-
-        // Initialize
-        fetchUsers();
-    </script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

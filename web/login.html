@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - LeetSeek</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-container">
+            <div class="logo">
+                <div class="logo-mark">LS</div>
+                <div class="logo-text">Leet<span>Seek</span></div>
+            </div>
+            
+            <div class="auth-title" id="formTitle">Welcome Back</div>
+            <div class="auth-sub" id="formSub">Sign in to view your dashboard</div>
+
+            <form id="authForm">
+                <div class="field">
+                    <label>Email Address</label>
+                    <input type="email" id="email" placeholder="you@example.com" required>
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-auth" id="submitBtn">Sign In</button>
+                <div id="errorMsg"></div>
+            </form>
+
+            <div class="toggle-mode">
+                <span id="toggleText">Don't have an account? Sign up</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Imports the auth setup from your separate firebase-config.js file
+        import { auth } from './firebase-config.js';
+        import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+
+        let isLoginMode = true;
+        const form = document.getElementById('authForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMsg = document.getElementById('errorMsg');
+        const toggleText = document.getElementById('toggleText');
+
+        toggleText.addEventListener('click', () => {
+            isLoginMode = !isLoginMode;
+            errorMsg.textContent = '';
+            document.getElementById('formTitle').textContent = isLoginMode ? 'Welcome Back' : 'Create Account';
+            document.getElementById('formSub').textContent = isLoginMode ? 'Sign in to view your dashboard' : 'Join to track your LeetCode friends';
+            submitBtn.textContent = isLoginMode ? 'Sign In' : 'Sign Up';
+            toggleText.innerHTML = isLoginMode ? "Don't have an account? <span>Sign up</span>" : "Already have an account? <span>Sign in</span>";
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Please wait...';
+            errorMsg.textContent = '';
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                if (isLoginMode) {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } else {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                }
+                window.location.href = 'index.html';
+            } catch (error) {
+                errorMsg.textContent = error.message.replace('Firebase: ', '');
+                submitBtn.disabled = false;
+                submitBtn.textContent = isLoginMode ? 'Sign In' : 'Sign Up';
+            }
+        });
+    </script>
+</body>
+</html>
