@@ -8,9 +8,13 @@ import os
 import base64
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
-import os
-from dotenv import load_dotenv
-load_dotenv()
+
+# dotenv is only needed for local development; on Vercel env vars are set via the dashboard
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+except ImportError:
+    pass
 
 # --- Firebase Initialization ---
 # This section securely initializes Firebase using an environment variable.

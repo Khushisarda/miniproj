@@ -2,7 +2,7 @@ import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "/api";
 
 let currentUserUid = null;
 let userData = { my_leetcode_id: null, friends: [] };
