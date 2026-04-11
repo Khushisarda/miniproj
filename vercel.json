@@ -27,32 +27,18 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
+      "src": "/api/?(.*)",
       "dest": "api/index.py"
     },
     {
-      "src": "/",
-      "dest": "web/index.html"
-    },
+      "src": "/(.*)",
+      "dest": "web/$1"
+    }
+  ],
+  "crons": [
     {
-      "src": "/index.html",
-      "dest": "web/index.html"
-    },
-    {
-      "src": "/login.html",
-      "dest": "web/login.html"
-    },
-    {
-      "src": "/styles.css",
-      "dest": "web/styles.css"
-    },
-    {
-      "src": "/app.js",
-      "dest": "web/app.js"
-    },
-    {
-      "src": "/firebase-config.js",
-      "dest": "web/firebase-config.js"
+      "path": "/api/index.py?source=cron",
+      "schedule": "0 18 * * *"
     }
   ]
 }
