@@ -5,7 +5,23 @@
       "use": "@vercel/python"
     },
     {
-      "src": "web/",
+      "src": "web/index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "web/styles.css",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "web/app.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "web/login.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "web/firebase-config.js",
       "use": "@vercel/static"
     }
   ],
@@ -15,8 +31,28 @@
       "dest": "api/index.py"
     },
     {
-      "src": "/(.*)",
-      "dest": "web/$1"
+      "src": "/",
+      "dest": "web/index.html"
+    },
+    {
+      "src": "/index.html",
+      "dest": "web/index.html"
+    },
+    {
+      "src": "/login.html",
+      "dest": "web/login.html"
+    },
+    {
+      "src": "/styles.css",
+      "dest": "web/styles.css"
+    },
+    {
+      "src": "/app.js",
+      "dest": "web/app.js"
+    },
+    {
+      "src": "/firebase-config.js",
+      "dest": "web/firebase-config.js"
     }
   ]
 }
