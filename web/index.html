@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LeetSeek Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -65,6 +65,29 @@
             </svg>
             Global Rank
         </button>
+        <button class="nav-tab" data-tab="challenges">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            Challenges
+        </button>
+        <button class="nav-tab" data-tab="achievements">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="7"></circle>
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+            </svg>
+            Achievements
+        </button>
+        <button class="nav-tab" data-tab="report">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            Report
+        </button>
     </nav>
 
     <div class="content">
@@ -103,6 +126,50 @@
             <div class="podium" id="podium-global"></div>
             <div class="rank-list" id="rankList-global"></div>
         </div>
+
+        <div class="tab-panel" id="tab-challenges">
+            <div class="lb-header">
+                <div>
+                    <div class="lb-title">Weekly Challenges</div>
+                    <div class="lb-subtitle">Push yourself and challenge friends</div>
+                </div>
+                <button class="add-btn" id="createChallengeBtn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    New Challenge
+                </button>
+            </div>
+            <div class="challenges-grid" id="challengesGrid"></div>
+            <div class="lb-header" style="margin-top: 2rem;">
+                <div>
+                    <div class="lb-title">Active Challenges</div>
+                    <div class="lb-subtitle">Challenges from you and your friends</div>
+                </div>
+            </div>
+            <div class="challenges-list" id="activeChallengesList"></div>
+        </div>
+
+        <div class="tab-panel" id="tab-achievements">
+            <div class="lb-header">
+                <div>
+                    <div class="lb-title">Achievements</div>
+                    <div class="lb-subtitle">Unlock badges as you progress</div>
+                </div>
+            </div>
+            <div class="achievements-grid" id="achievementsGrid"></div>
+        </div>
+
+        <div class="tab-panel" id="tab-report">
+            <div class="lb-header">
+                <div>
+                    <div class="lb-title">Weekly Report</div>
+                    <div class="lb-subtitle">Your progress this week</div>
+                </div>
+            </div>
+            <div class="report-container" id="reportContainer"></div>
+        </div>
     </div>
 </div>
 
@@ -117,6 +184,58 @@
         <div class="modal-actions">
             <button class="btn-cancel" id="cancelBtn">Cancel</button>
             <button class="btn-confirm" id="confirmBtn">Add Friend</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="challengeModal">
+    <div class="modal">
+        <div class="modal-title">Create Weekly Challenge</div>
+        <div class="modal-sub">Set a goal for the week.</div>
+        <div class="field">
+            <label>Difficulty</label>
+            <select id="challengeDifficulty" style="width: 100%; padding: 0.875rem 1rem; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r2); color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.95rem; outline: none;">
+                <option value="Easy">Easy</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Hard">Hard</option>
+                <option value="Any">Any</option>
+            </select>
+        </div>
+        <div class="field">
+            <label>Target (problems to solve)</label>
+            <input type="number" id="challengeTarget" value="5" min="1" max="100" autocomplete="off">
+        </div>
+        <div class="field">
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" id="challengeFriend" style="width: auto;">
+                Challenge a friend
+            </label>
+        </div>
+        <div class="field" id="friendSelectField" style="display: none;">
+            <label>Select Friend</label>
+            <select id="challengeFriendSelect" style="width: 100%; padding: 0.875rem 1rem; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r2); color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.95rem; outline: none;">
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" id="cancelChallengeBtn">Cancel</button>
+            <button class="btn-confirm" id="createChallengeConfirmBtn">Create</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="compareModal">
+    <div class="modal" style="max-width: 600px;">
+        <div class="modal-title">1v1 Compare</div>
+        <div class="modal-sub">Choose a friend to compare with.</div>
+        <div class="field">
+            <label>Select Friend</label>
+            <select id="compareFriendSelect" style="width: 100%; padding: 0.875rem 1rem; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r2); color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.95rem; outline: none;">
+            </select>
+        </div>
+        <div id="compareResult" style="margin-top: 1.5rem;"></div>
+        <div class="modal-actions">
+            <button class="btn-cancel" id="cancelCompareBtn">Close</button>
+            <button class="btn-confirm" id="compareBtn">Compare</button>
         </div>
     </div>
 </div>
