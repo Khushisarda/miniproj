@@ -110,10 +110,18 @@ def get_leetcode_summary(username):
             "timestamp": datetime.datetime.fromtimestamp(int(sub["timestamp"])).isoformat()
         }
 
+    # Calculate XP and Level
+    # Easy = 10 XP, Medium = 20 XP, Hard = 30 XP
+    xp = (solved.get("Easy", 0) * 10) + (solved.get("Medium", 0) * 20) + (solved.get("Hard", 0) * 30)
+    # Level = floor(sqrt(XP / 100))
+    level = int(xp ** 0.5 // 1)
+
     return {
         "name": name,
         "username": username,
         "problems_solved": solved,
+        "xp": xp,
+        "level": level,
         "last_submission": last_submission
     }
 
@@ -239,15 +247,17 @@ class handler(BaseHTTPRequestHandler):
                     leetcode_data["last_updated"] = firestore.SERVER_TIMESTAMP
                     doc_ref = db.collection("leetcodeUsers").document(username)
                     doc_ref.set(leetcode_data)
-                    
+
                     # Remove non-serializable field for the JSON response
                     if "last_updated" in leetcode_data:
                         del leetcode_data["last_updated"]
-                        
+
                     response = {
                         "status": "success",
                         "message": f"Successfully fetched and stored data for {username}.",
-                        "data": leetcode_data
+                        "data": leetcode_data,
+                        "xp": leetcode_data.get("xp", 0),
+                        "level": leetcode_data.get("level", 0)
                     }
             except Exception as e:
                 response = {"status": "error", "message": "An internal error occurred.", "details": str(e)}
