@@ -15,14 +15,12 @@
       "dest": "api/index.py"
     },
     {
+      "src": "^/$",
+      "dest": "web/index.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "web/$1"
-    }
-  ],
-  "crons": [
-    {
-      "path": "/api/index.py?source=cron",
-      "schedule": "0 18 * * *"
     }
   ]
 }
