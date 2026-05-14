@@ -5,20 +5,31 @@ import { doc, getDoc, setDoc, updateDoc, arrayUnion } from "https://www.gstatic.
 const API_BASE = "/api";
 
 let currentUserUid = null;
-let userData = { my_leetcode_id: null, friends: [] };
+let userData = { my_leetcode_id: null, my_codeforces_id: null, friends: [] };
 let allLeetcodeData = []; 
+let allCodeforcesData = [];
 
 window.linkMyProfile = async function() {
-    const input = document.getElementById('myLeetcodeInput').value.trim();
-    if (!input) return;
+    const lcInput = document.getElementById('myLeetcodeInput').value.trim();
+    const cfInput = document.getElementById('myCodeforcesInput').value.trim();
+    if (!lcInput && !cfInput) return;
     
-    showToast("Linking profile...", "success");
+    showToast("Linking profiles...", "success");
     try {
-        await fetch(`${API_BASE}?username=${encodeURIComponent(input)}`);
         const userRef = doc(db, "users", currentUserUid);
-        await updateDoc(userRef, { my_leetcode_id: input });
+        let updates = {};
+        if (lcInput) {
+            await fetch(`${API_BASE}?username=${encodeURIComponent(lcInput)}`);
+            updates.my_leetcode_id = lcInput;
+            userData.my_leetcode_id = lcInput;
+        }
+        if (cfInput) {
+            await fetch(`${API_BASE}?cf_username=${encodeURIComponent(cfInput)}`);
+            updates.my_codeforces_id = cfInput;
+            userData.my_codeforces_id = cfInput;
+        }
         
-        userData.my_leetcode_id = input;
+        await updateDoc(userRef, updates);
         showToast("Profile linked successfully!", "success");
         await loadData();
     } catch (e) {
@@ -47,9 +58,10 @@ async function loadData() {
 
         if (docSnap.exists()) {
             userData = docSnap.data();
+            if (userData.my_codeforces_id === undefined) userData.my_codeforces_id = null;
         } else {
-            await setDoc(userRef, { my_leetcode_id: null, friends: [], challenges: { my_challenge: null, challenged_by: [] } });
-            userData = { my_leetcode_id: null, friends: [], challenges: { my_challenge: null, challenged_by: [] } };
+            await setDoc(userRef, { my_leetcode_id: null, my_codeforces_id: null, friends: [], challenges: { my_challenge: null, challenged_by: [] } });
+            userData = { my_leetcode_id: null, my_codeforces_id: null, friends: [], challenges: { my_challenge: null, challenged_by: [] } };
         }
 
         // Load challenges
@@ -57,13 +69,23 @@ async function loadData() {
 
         const r = await fetch(`${API_BASE}?source=list`);
         const d = await r.json();
+        
+        const rCf = await fetch(`${API_BASE}?source=list_cf`);
+        const dCf = await rCf.json();
 
         if (d.status === 'success') {
             allLeetcodeData = d.users || [];
-            renderAll();
         } else {
-            showError('Failed to load data from server.');
+            allLeetcodeData = [];
         }
+        
+        if (dCf && dCf.status === 'success') {
+            allCodeforcesData = dCf.users || [];
+        } else {
+            allCodeforcesData = [];
+        }
+        
+        renderAll();
     } catch (e) {
         showError('Cannot connect to backend API.');
     }
@@ -82,66 +104,71 @@ function renderAll() {
 function renderProfile() {
     const el = document.getElementById('profileContent');
 
-    if (!userData.my_leetcode_id) {
+    if (!userData.my_leetcode_id && !userData.my_codeforces_id) {
         el.innerHTML = `
             <div class="empty">
                 <div class="empty-icon">👤</div>
                 <h3>Link Your Profile</h3>
-                <p>Enter your personal LeetCode username to view your stats here.</p>
-                <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; justify-content: center; max-width: 300px; margin-inline: auto;">
-                    <input type="text" id="myLeetcodeInput" placeholder="Your username" style="padding: 0.75rem; border-radius: var(--r2); border: 1px solid var(--border2); background: var(--bg3); color: var(--text); width: 100%;">
-                    <button onclick="linkMyProfile()" style="padding: 0.75rem 1.5rem; background: var(--accent); color: var(--bg); border: none; border-radius: var(--r2); font-weight: bold; cursor: pointer;">Link</button>
+                <p>Enter your LeetCode and/or Codeforces usernames to view your stats here.</p>
+                <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; justify-content: center; max-width: 300px; margin-inline: auto;">
+                    <input type="text" id="myLeetcodeInput" placeholder="LeetCode Username" style="padding: 0.75rem; border-radius: var(--r2); border: 1px solid var(--border2); background: var(--bg3); color: var(--text); width: 100%;">
+                    <input type="text" id="myCodeforcesInput" placeholder="Codeforces Username" style="padding: 0.75rem; border-radius: var(--r2); border: 1px solid var(--border2); background: var(--bg3); color: var(--text); width: 100%;">
+                    <button onclick="linkMyProfile()" style="padding: 0.75rem 1.5rem; background: var(--accent); color: var(--bg); border: none; border-radius: var(--r2); font-weight: bold; cursor: pointer; margin-top: 0.5rem;">Link</button>
                 </div>
             </div>`;
         return;
     }
 
-    const myProfile = allLeetcodeData.find(u => u.username === userData.my_leetcode_id);
-    if (!myProfile) {
+    const myProfile = allLeetcodeData.find(u => u.username === userData.my_leetcode_id) || {};
+    const myCfProfile = allCodeforcesData.find(u => u.username === userData.my_codeforces_id) || {};
+    
+    if (!myProfile.username && !myCfProfile.username) {
         el.innerHTML = `<div class="empty"><p>Profile data not found. It may take a moment to sync.</p></div>`;
         return;
     }
 
     const t = getTotals(myProfile);
     const sub = myProfile.last_submission;
+    const cfSub = myCfProfile.last_submission;
     const easyPct = t.total ? Math.round((t.easy / t.total) * 100) : 0;
     const medPct = t.total ? Math.round((t.medium / t.total) * 100) : 0;
     const hardPct = t.total ? Math.round((t.hard / t.total) * 100) : 0;
 
     const xp = myProfile.xp || calculateXP(myProfile);
     const { level, progress } = getLevelProgress(xp);
+    const cfRating = myCfProfile.rating || 0;
+    const overallScore = getUnifiedScore(myProfile, myCfProfile);
+    
+    const displayName = myProfile.name || myCfProfile.name || myProfile.username || myCfProfile.username;
+    const displayInitial = displayName[0].toUpperCase();
 
     el.innerHTML = `
     <div class="profile-hero">
         <div class="profile-hero-top">
-            <div class="profile-big-avatar">${getInitial(myProfile)}</div>
+            <div class="profile-big-avatar">${displayInitial}</div>
             <div class="profile-hero-info">
-                <div class="profile-hero-name">${myProfile.name || myProfile.username}</div>
-                <div class="profile-hero-handle">@${myProfile.username}</div>
+                <div class="profile-hero-name">${displayName}</div>
+                <div class="profile-hero-handle">Overall Metric: ${overallScore} Points</div>
                 <div class="xp-level-row">
                     <div class="level-badge">
                         <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                        Lv ${level}
+                        Lv ${level} (LC)
                     </div>
-                    <div class="xp-bar-wrap">
-                        <div class="xp-bar-label">
-                            <span>${xp} XP</span>
-                            <span>${Math.round(progress)}% to Lv ${level + 1}</span>
-                        </div>
-                        <div class="xp-bar"><div class="xp-bar-fill" style="width:${progress}%"></div></div>
+                    <div class="level-badge" style="background: var(--hard); color: var(--bg);">
+                        CF Rating: ${cfRating}
                     </div>
                 </div>
             </div>
         </div>
         <div class="profile-stats-grid">
-            <div class="pstat"><span class="pstat-val">${t.total}</span><div class="pstat-label">Total</div></div>
-            <div class="pstat"><span class="pstat-val easy">${t.easy}</span><div class="pstat-label">Easy</div></div>
-            <div class="pstat"><span class="pstat-val medium">${t.medium}</span><div class="pstat-label">Medium</div></div>
-            <div class="pstat"><span class="pstat-val hard">${t.hard}</span><div class="pstat-label">Hard</div></div>
+            <div class="pstat"><span class="pstat-val">${t.total}</span><div class="pstat-label">LC Total</div></div>
+            <div class="pstat"><span class="pstat-val easy">${t.easy}</span><div class="pstat-label">LC Easy</div></div>
+            <div class="pstat"><span class="pstat-val medium">${t.medium}</span><div class="pstat-label">LC Med</div></div>
+            <div class="pstat"><span class="pstat-val hard">${myCfProfile.rank || 'Unrated'}</span><div class="pstat-label">CF Rank</div></div>
         </div>
     </div>
     <div class="profile-progress">
-        <div class="progress-title">Problem Breakdown</div>
+        <div class="progress-title">Leetcode Problem Breakdown</div>
         <div class="prog-row">
             <div class="prog-header"><span class="prog-name" style="color:var(--easy)">Easy</span><span class="prog-count">${t.easy} · ${easyPct}%</span></div>
             <div class="prog-track"><div class="prog-fill easy" style="width:${easyPct}%"></div></div>
@@ -155,9 +182,10 @@ function renderProfile() {
             <div class="prog-track"><div class="prog-fill hard" style="width:${hardPct}%"></div></div>
         </div>
     </div>
+    <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
     ${sub ? `
-    <div class="last-sub-card">
-        <div class="last-sub-header">Last Submission</div>
+    <div class="last-sub-card" style="flex: 1; min-width: 250px;">
+        <div class="last-sub-header">Last LC Submission</div>
         <div class="last-sub-content">
             <a class="last-sub-title" href="${sub.url}" target="_blank">${sub.title}</a>
             <div class="last-sub-meta">
@@ -165,7 +193,19 @@ function renderProfile() {
                 <span class="time-chip">${formatRelative(sub.timestamp)}</span>
             </div>
         </div>
-    </div>` : ''}`;
+    </div>` : ''}
+    ${cfSub ? `
+    <div class="last-sub-card" style="flex: 1; min-width: 250px;">
+        <div class="last-sub-header">Last CF Submission</div>
+        <div class="last-sub-content">
+            <a class="last-sub-title" href="${cfSub.url}" target="_blank">${cfSub.title}</a>
+            <div class="last-sub-meta">
+                <span class="lang-chip">${cfSub.lang}</span>
+                <span class="time-chip">${formatRelative(cfSub.timestamp)}</span>
+            </div>
+        </div>
+    </div>` : ''}
+    </div>`;
 }
 
 function renderFriends() {
@@ -209,61 +249,87 @@ function renderFriends() {
     }).join('');
 }
 
-// Reusable function to build the leaderboard UI
-function renderGenericLeaderboard(dataArray, podiumId, listId, emptyMsg) {
+// Helper to create unified users based on friends list or globally
+function getUnifiedUsers(usernamesList = null) {
+    let unified = [];
+    const lookupUsers = usernamesList ? usernamesList : [...new Set([...allLeetcodeData.map(u=>u.username), ...allCodeforcesData.map(u=>u.username)])];
+    
+    for (const uname of lookupUsers) {
+        const lcProfile = allLeetcodeData.find(u => u.username === uname);
+        const cfProfile = allCodeforcesData.find(u => u.username === uname);
+        
+        if (!lcProfile && !cfProfile) continue;
+        
+        unified.push({
+            username: uname,
+            name: (lcProfile && lcProfile.name) || (cfProfile && cfProfile.name) || uname,
+            lcProfile: lcProfile,
+            cfProfile: cfProfile,
+            overallScore: getUnifiedScore(lcProfile, cfProfile)
+        });
+    }
+    
+    // Sort by overall score descending
+    unified.sort((a, b) => b.overallScore - a.overallScore);
+    return unified;
+}
+
+// Reusable function to build the unified leaderboard UI
+function renderGenericLeaderboard(unifiedArray, podiumId, listId, emptyMsg) {
     const podiumEl = document.getElementById(podiumId);
     const listEl = document.getElementById(listId);
 
-    if (dataArray.length === 0) {
+    if (unifiedArray.length === 0) {
         podiumEl.innerHTML = '';
         listEl.innerHTML = `<div class="empty"><div class="empty-icon">🏆</div><h3>Leaderboard empty</h3><p>${emptyMsg}</p></div>`;
         return;
     }
 
-    const maxTotal = getTotals(dataArray[0]).total || 1;
+    const maxScore = unifiedArray[0].overallScore || 1;
     const rankEmojis = ['🥇', '🥈', '🥉'];
     const rankClasses = ['rank-1', 'rank-2', 'rank-3'];
 
-    const top3 = dataArray.slice(0, Math.min(3, dataArray.length));
+    const top3 = unifiedArray.slice(0, Math.min(3, unifiedArray.length));
     const podiumOrder = top3.length === 3 ? [top3[1], top3[0], top3[2]] : top3.length === 2 ? [top3[1], top3[0]] : [top3[0]];
     const originalIdx = podiumOrder.map(u => top3.indexOf(u));
 
     podiumEl.innerHTML = podiumOrder.map((user, pi) => {
         const ri = originalIdx[pi]; 
-        const t = getTotals(user);
+        const lcTotal = user.lcProfile ? getTotals(user.lcProfile).total : 0;
+        const cfRating = user.cfProfile ? user.cfProfile.rating : 0;
         return `
         <div class="podium-card ${rankClasses[ri]}">
             <div class="podium-rank">${rankEmojis[ri]}</div>
-            <div class="podium-avatar">${getInitial(user)}</div>
-            <div class="podium-name">${user.name || user.username}</div>
+            <div class="podium-avatar">${user.name[0].toUpperCase()}</div>
+            <div class="podium-name">${user.name}</div>
             <div class="podium-handle">@${user.username}</div>
-            <div class="podium-total">${t.total}</div>
+            <div class="podium-total">${user.overallScore} Pts</div>
         </div>`;
     }).join('');
 
-    const rest = dataArray.slice(3);
+    const rest = unifiedArray.slice(3);
     if (rest.length === 0) { listEl.innerHTML = ''; return; }
 
     listEl.innerHTML = rest.map((user, i) => {
-        const t = getTotals(user);
-        const pct = Math.round((t.total / maxTotal) * 100);
+        const pct = Math.round((user.overallScore / maxScore) * 100);
+        const lcTotal = user.lcProfile ? getTotals(user.lcProfile).total : 0;
+        const cfRating = user.cfProfile ? user.cfProfile.rating : 0;
         return `
         <div class="rank-row">
             <div class="rank-num">#${i + 4}</div>
             <div class="rank-row-info">
-                <div class="rank-avatar-sm">${getInitial(user)}</div>
+                <div class="rank-avatar-sm">${user.name[0].toUpperCase()}</div>
                 <div>
-                    <div class="rank-row-name">${user.name || user.username}</div>
+                    <div class="rank-row-name">${user.name}</div>
                     <div class="rank-row-handle">@${user.username}</div>
                     <div class="bar-wrap" style="width:160px;max-width:100%"><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div></div>
                 </div>
             </div>
             <div class="rank-row-right">
-                <div class="rank-total">${t.total}</div>
+                <div class="rank-total">${user.overallScore}</div>
                 <div class="rank-breakdown">
-                    <span class="diff-badge easy">${t.easy}E</span>
-                    <span class="diff-badge medium">${t.medium}M</span>
-                    <span class="diff-badge hard">${t.hard}H</span>
+                    <span class="diff-badge medium">LC ${lcTotal}</span>
+                    <span class="diff-badge hard">CF ${cfRating}</span>
                 </div>
             </div>
         </div>`;
@@ -274,20 +340,17 @@ function renderGenericLeaderboard(dataArray, podiumId, listId, emptyMsg) {
 function renderFriendsLeaderboard() {
     let networkUsernames = [...userData.friends];
     if (userData.my_leetcode_id) networkUsernames.push(userData.my_leetcode_id);
+    if (userData.my_codeforces_id) networkUsernames.push(userData.my_codeforces_id);
     networkUsernames = [...new Set(networkUsernames)];
 
-    let networkData = allLeetcodeData.filter(u => networkUsernames.includes(u.username));
-    networkData.sort((a, b) => getTotals(b).total - getTotals(a).total);
-
-    renderGenericLeaderboard(networkData, 'podium-friends', 'rankList-friends', 'Link your profile or add friends to see rankings.');
+    const unifiedNetwork = getUnifiedUsers(networkUsernames);
+    renderGenericLeaderboard(unifiedNetwork, 'podium-friends', 'rankList-friends', 'Link your profile or add friends to see rankings.');
 }
 
 // Render the Global Leaderboard
 function renderGlobalLeaderboard() {
-    let globalData = [...allLeetcodeData];
-    globalData.sort((a, b) => getTotals(b).total - getTotals(a).total);
-
-    renderGenericLeaderboard(globalData, 'podium-global', 'rankList-global', 'No users found in the database.');
+    const unifiedGlobal = getUnifiedUsers();
+    renderGenericLeaderboard(unifiedGlobal, 'podium-global', 'rankList-global', 'No users found in the database.');
 }
 
 // --- CHALLENGES SYSTEM ---
@@ -752,6 +815,18 @@ function calculateXP(user) {
 
 function calculateLevel(xp) {
     return Math.floor(Math.sqrt(xp / 100));
+}
+
+function getUnifiedScore(lcProfile, cfProfile) {
+    let score = 0;
+    if (lcProfile) {
+        const xp = lcProfile.xp || calculateXP(lcProfile);
+        score += xp;
+    }
+    if (cfProfile) {
+        score += (cfProfile.rating || 0);
+    }
+    return score;
 }
 
 function getLevelProgress(xp) {
