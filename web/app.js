@@ -87,7 +87,8 @@ async function loadData() {
         
         renderAll();
     } catch (e) {
-        showError('Cannot connect to backend API.');
+        console.error(e);
+        showError('Cannot connect to backend API: ' + e.message + '\\n' + e.stack);
     }
 }
 
