@@ -59,6 +59,7 @@ async function loadData() {
         if (docSnap.exists()) {
             userData = docSnap.data();
             if (userData.my_codeforces_id === undefined) userData.my_codeforces_id = null;
+            if (userData.friends === undefined) userData.friends = [];
         } else {
             await setDoc(userRef, { my_leetcode_id: null, my_codeforces_id: null, friends: [], challenges: { my_challenge: null, challenged_by: [] } });
             userData = { my_leetcode_id: null, my_codeforces_id: null, friends: [], challenges: { my_challenge: null, challenged_by: [] } };
