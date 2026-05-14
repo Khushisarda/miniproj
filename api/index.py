@@ -129,6 +129,56 @@ def get_leetcode_summary(username):
         "last_submission": last_submission
     }
 
+# --- Codeforces API Logic ---
+def get_codeforces_summary(username):
+    """Fetches a complete summary for a given Codeforces username."""
+    # Fetch user info
+    user_info_url = f"https://codeforces.com/api/user.info?handles={username}"
+    try:
+        info_resp = requests.get(user_info_url, timeout=10)
+        info_resp.raise_for_status()
+        info_data = info_resp.json()
+        if info_data.get("status") != "OK":
+            return {"error": f"User '{username}' not found on Codeforces."}
+        user_info = info_data["result"][0]
+        name = f"{user_info.get('firstName', '')} {user_info.get('lastName', '')}".strip() or username
+        rating = user_info.get("rating", 0)
+        rank = user_info.get("rank", "unrated")
+    except requests.exceptions.RequestException as e:
+        print(f"Error connecting to Codeforces API: {e}")
+        return {"error": "Failed to fetch user info from Codeforces API."}
+
+    # Fetch last submission
+    status_url = f"https://codeforces.com/api/user.status?handle={username}&from=1&count=1"
+    last_submission = None
+    try:
+        status_resp = requests.get(status_url, timeout=10)
+        status_resp.raise_for_status()
+        status_data = status_resp.json()
+        if status_data.get("status") == "OK" and status_data.get("result"):
+            sub = status_data["result"][0]
+            prob = sub.get("problem", {})
+            contest_id = prob.get("contestId")
+            index = prob.get("index")
+            url = f"https://codeforces.com/problemset/problem/{contest_id}/{index}" if contest_id and index else ""
+            last_submission = {
+                "title": prob.get("name", "Unknown Problem"),
+                "lang": sub.get("programmingLanguage", ""),
+                "url": url,
+                "timestamp": datetime.datetime.fromtimestamp(sub.get("creationTimeSeconds", 0)).isoformat(),
+            }
+    except requests.exceptions.RequestException as e:
+        print(f"Error connecting to Codeforces API (status): {e}")
+
+    return {
+        "name": name,
+        "username": username,
+        "rating": rating,
+        "rank": rank,
+        "last_submission": last_submission
+    }
+
+
 # --- CORS Helper ---
 def add_cors_headers(self):
     """Add CORS headers for cross-origin requests."""
@@ -149,6 +199,7 @@ class handler(BaseHTTPRequestHandler):
         """Handles GET requests for single users, list users, or scheduled cron jobs."""
         query_components = parse_qs(urlparse(self.path).query)
         username = query_components.get('username', [None])[0]
+        cf_username = query_components.get('cf_username', [None])[0]
         source = query_components.get('source', [None])[0]
 
         self.send_response(200)
@@ -182,6 +233,25 @@ class handler(BaseHTTPRequestHandler):
                 }
             except Exception as e:
                 response = {"status": "error", "message": "Failed to fetch users.", "details": str(e)}
+
+        # --- List All Codeforces Users Endpoint ---
+        elif source == 'list_cf':
+            try:
+                users_ref = db.collection("codeforcesUsers").stream()
+                users = []
+                for doc in users_ref:
+                    user_data = doc.to_dict()
+                    if "last_updated" in user_data:
+                        user_data["last_updated"] = user_data["last_updated"].isoformat() if hasattr(user_data["last_updated"], 'isoformat') else str(user_data["last_updated"])
+                    user_data["id"] = doc.id
+                    users.append(user_data)
+                response = {
+                    "status": "success",
+                    "total_users": len(users),
+                    "users": users
+                }
+            except Exception as e:
+                response = {"status": "error", "message": "Failed to fetch CF users.", "details": str(e)}
 
         # --- Get Stored User Data Endpoint ---
         elif source == 'get' and username:
@@ -226,11 +296,30 @@ class handler(BaseHTTPRequestHandler):
                         print(f"CRON: Failed to update {uname}: {e}")
                         failed_users.append(uname)
 
+                # Update Codeforces users
+                cf_users_ref = db.collection("codeforcesUsers").stream()
+                cf_usernames = [doc.id for doc in cf_users_ref]
+                cf_updated_count = 0
+                for uname in cf_usernames:
+                    try:
+                        print(f"CRON: Updating CF {uname}...")
+                        cf_data = get_codeforces_summary(uname)
+                        if "error" not in cf_data:
+                            cf_data["last_updated"] = firestore.SERVER_TIMESTAMP
+                            db.collection("codeforcesUsers").document(uname).set(cf_data, merge=True)
+                            cf_updated_count += 1
+                        else:
+                            failed_users.append(f"cf_{uname}")
+                    except Exception as e:
+                        print(f"CRON: Failed to update CF {uname}: {e}")
+                        failed_users.append(f"cf_{uname}")
+
                 response = {
                     "status": "success",
                     "job": "cron_update_all",
                     "total_users_found": len(usernames),
                     "updated_successfully": updated_count,
+                    "cf_updated_successfully": cf_updated_count,
                     "failed_to_update": len(failed_users),
                     "failed_users": failed_users
                 }
@@ -266,9 +355,28 @@ class handler(BaseHTTPRequestHandler):
             except Exception as e:
                 response = {"status": "error", "message": "An internal error occurred.", "details": str(e)}
         
+        # --- Single Codeforces User Logic ---
+        elif cf_username:
+            try:
+                cf_data = get_codeforces_summary(cf_username)
+                if "error" in cf_data:
+                    response = {"status": "error", "message": cf_data["error"]}
+                else:
+                    cf_data["last_updated"] = firestore.SERVER_TIMESTAMP
+                    db.collection("codeforcesUsers").document(cf_username).set(cf_data)
+                    if "last_updated" in cf_data:
+                        del cf_data["last_updated"]
+                    response = {
+                        "status": "success",
+                        "message": f"Successfully fetched and stored CF data for {cf_username}.",
+                        "data": cf_data
+                    }
+            except Exception as e:
+                response = {"status": "error", "message": "An internal error occurred.", "details": str(e)}
+
         # --- No Valid Parameter Logic ---
         else:
-            response = {"status": "error", "message": "Please provide a 'username' query parameter or use '?source=cron'."}
+            response = {"status": "error", "message": "Please provide 'username', 'cf_username', or '?source=cron'."}
 
         self.wfile.write(json.dumps(response, indent=2).encode('utf-8'))
         return
