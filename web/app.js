@@ -592,7 +592,9 @@ function renderAchievements() {
     // Check achievements first
     checkAchievements();
 
-    grid.innerHTML = ACHIEVEMENTS.map(a => {
+    const dataToRender = earnedAchievements.length > 0 ? earnedAchievements : ACHIEVEMENTS;
+
+    grid.innerHTML = dataToRender.map(a => {
         const current = a.current || 0;
         const earned = a.earned || false;
         const progress = Math.min(100, (current / a.target) * 100);
